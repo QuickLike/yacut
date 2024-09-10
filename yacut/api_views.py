@@ -17,20 +17,34 @@ def get_url(short_id):
 
 
 @app.route('/api/id/', methods=['POST'])
-def cut_url():
-    try:
-        data = request.get_json()
-    except Exception:
+def create_url():
+    data = request.get_json(silent=True)
+
+    if not data:
         raise InvalidAPIUsage('Отсутствует тело запроса')
-    if data.get('url') is None:
+
+    if 'url' not in data:
         raise InvalidAPIUsage('"url" является обязательным полем!')
-    link = data['url']
-    custom_id = data.get('custom_id', get_unique_short_id())
-    if not check_custom_id(custom_id):
+
+    if not data.get('custom_id'):
+        data['custom_id'] = get_unique_short_id()
+    if URLMap.query.filter_by(short=data['custom_id']).first():
+        raise InvalidAPIUsage(
+            'Предложенный вариант короткой ссылки уже существует.'
+        )
+    if not check_custom_id(data['custom_id']):
         raise InvalidAPIUsage('Указано недопустимое имя для короткой ссылки')
-    if URLMap.query.filter_by(short=custom_id).first() is not None:
-        raise InvalidAPIUsage('Предложенный вариант короткой ссылки уже существует.')
-    urlmap = URLMap(original=link, short=custom_id)
-    db.session.add(urlmap)
+
+    url = data['url']
+    custom_id = data['custom_id']
+    url_map = URLMap.query.filter_by(original=url).first()
+    if url_map is not None:
+        db.session.delete(url_map)
+        db.session.commit()
+    url_map = URLMap(
+        original=url,
+        short=custom_id
+    )
+    db.session.add(url_map)
     db.session.commit()
-    return jsonify(urlmap.to_dict()), HTTPStatus.CREATED
+    return jsonify(url_map.to_dict()), HTTPStatus.CREATED
