@@ -31,5 +31,4 @@ def internal_error(error):
 
 @app.errorhandler(HTTPStatus.NOT_FOUND)
 def page_not_found(error):
-    db.session.rollback()
     return render_template('404.html'), HTTPStatus.NOT_FOUND
