@@ -43,6 +43,12 @@ FLASK_DEBUG=<1_или_0>
 DATABASE_URI=<тип_бд>:///<имя_бд>
 SECRET_KEY=<любой_ключ>
 ```
+Инициализация Базы Данных
+```
+flask init
+flask migrate
+flask upgrade
+```
 Запуск сервера
 ```
 flask run
