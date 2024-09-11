@@ -3,10 +3,7 @@ from wtforms import URLField, SubmitField
 from wtforms.fields.simple import StringField
 from wtforms.validators import DataRequired, Length, Optional, URL, Regexp
 
-from settings import Original, Short
-
-
-SUBMIT_LABEL = 'Создать'
+from settings import Original, Short, SUBMIT_LABEL
 
 
 class URLForm(FlaskForm):
@@ -23,7 +20,8 @@ class URLForm(FlaskForm):
         validators=[
             Optional(),
             Length(max=Short.LENGTH),
-            Regexp(Short.REGEX)
-        ]
+            Regexp(Short.REGEX),
+        ],
+        default='',
     )
     submit = SubmitField(SUBMIT_LABEL)

@@ -4,15 +4,15 @@ from flask import jsonify, request
 
 from settings import ViewMessage
 from . import app
-from .error_handlers import InvalidAPIUsage
+from .error_handlers import InvalidUsage
 from .models import URLMap
 
 
 @app.route('/api/id/<short>/', methods=['GET'])
 def get_url(short):
-    url_map = URLMap.get_by_short(short)
+    url_map = URLMap.get(short)
     if url_map is None:
-        raise InvalidAPIUsage(ViewMessage.ID_NOT_FOUND, HTTPStatus.NOT_FOUND)
+        raise InvalidUsage(ViewMessage.ID_NOT_FOUND, HTTPStatus.NOT_FOUND)
     return jsonify({'url': url_map.original}), HTTPStatus.OK
 
 
@@ -21,17 +21,14 @@ def create_url():
     data = request.get_json(silent=True)
 
     if not data:
-        raise InvalidAPIUsage(ViewMessage.EMPTY_BODY)
+        raise InvalidUsage(ViewMessage.EMPTY_BODY)
 
     if 'url' not in data:
-        raise InvalidAPIUsage(ViewMessage.URL_REQUIRED)
+        raise InvalidUsage(ViewMessage.URL_REQUIRED)
 
-    if URLMap.get_by_short(data.get('custom_id', '')):
-        raise InvalidAPIUsage(
-            ViewMessage.SHORT_EXISTS
-        )
-
-    url = data['url']
-    short = data.get('custom_id', '')
-    url_map = URLMap.create(url, short)
-    return jsonify(url_map.to_dict()), HTTPStatus.CREATED
+    return jsonify(
+        URLMap.create(
+            data['url'],
+            data.get('custom_id', '')
+        )[0].to_dict()
+    ), HTTPStatus.CREATED

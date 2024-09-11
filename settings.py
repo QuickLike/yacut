@@ -4,18 +4,18 @@ from string import ascii_letters, digits
 
 CUT_FUNCTION = 'cut_url_view'
 
+SUBMIT_LABEL = 'Создать'
+
 
 class Short(object):
     LENGTH = 6
     CHARS = ascii_letters + digits
-    REGEX = r'^[a-zA-Z0-9]{,6}$'
+    REGEX = r'^[' + CHARS + ']{,' + str(LENGTH) + '}$'
     LABEL = 'Ваш вариант короткой ссылки'
-    URL_READY = ('Ваша новая ссылка готова:\n'
-                 '<a href="{short_url}">{short_url}</a>')
 
 
 class Original(object):
-    LENGTH = 256
+    LENGTH = 1024
     LABEL = 'Длинная ссылка'
     REQUIRED_MESSAGE = 'Обязательное поле'
     INVALID_FORMAT = 'Некорректный формат ссылки'

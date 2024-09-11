@@ -1,6 +1,5 @@
-from flask import render_template, redirect, url_for
+from flask import render_template, redirect
 
-from settings import ViewMessage, Short, CUT_FUNCTION
 from . import app
 from .forms import URLForm
 from .models import URLMap
@@ -12,35 +11,24 @@ def index_view():
     if not form.validate_on_submit():
         return render_template('index.html', form=form)
 
-    short = form.custom_id.data or ''
+    short = form.custom_id.data
 
-    if URLMap.get_by_short(short):
-        form.custom_id.errors = [
-            ViewMessage.SHORT_EXISTS
-        ]
-        return render_template('index.html', form=form)
-    if not URLMap.check_short(short):
-        form.custom_id.errors = [
-            ViewMessage.SHORT_INVALID
-        ]
-        return render_template('index.html', form=form)
+    url_map, form = URLMap.create(form.original_link.data, short, form)
 
-    url = URLMap.create(form.original_link.data, short)
+    if form.errors:
+        short_url = None
+    else:
+        short_url = URLMap.short_link(url_map.short)
+
     return render_template(
         'index.html',
         form=form,
-        message=Short.URL_READY.format(
-            short_url=url_for(
-                CUT_FUNCTION,
-                short=url.short,
-                _external=True,
-            )
-        )
+        short_url=short_url,
     )
 
 
 @app.route('/<short>', methods=['GET'])
 def cut_url_view(short):
     return redirect(
-        URLMap.get_by_short(short, True).original
+        URLMap.get(short, True).original
     )
