@@ -3,10 +3,15 @@ from datetime import datetime
 from random import choices
 
 from flask import url_for
-from wtforms.validators import ValidationError
 
 from settings import Short, Original, CUT_FUNCTION, ViewMessage
 from . import db
+from .error_handlers import (
+    LimitReached,
+    InvalidAPIUsage,
+    InvalidShort,
+    InvalidURL
+)
 
 
 class URLMap(db.Model):
@@ -39,7 +44,7 @@ class URLMap(db.Model):
             short = ''.join(choices(Short.CHARS, k=Short.LENGTH))
             if not URLMap.get(short):
                 return short
-        raise TimeoutError(Short.GENERATE_ERROR)
+        raise LimitReached(Short.GENERATE_ERROR)
 
     @staticmethod
     def get(short: str, or_404=False):
@@ -49,14 +54,20 @@ class URLMap(db.Model):
         return url_maps.first()
 
     @staticmethod
-    def create(original: str, short: str):
+    def create(original: str, short: str, api=False):
         if short:
             if len(short) > Short.LENGTH or not re.match(Short.REGEX, short):
-                raise ValidationError(ViewMessage.SHORT_INVALID)
+                if api:
+                    raise InvalidAPIUsage(ViewMessage.SHORT_INVALID)
+                raise InvalidShort(ViewMessage.SHORT_INVALID)
             if URLMap.get(short):
-                raise ValidationError(ViewMessage.SHORT_EXISTS)
+                if api:
+                    raise InvalidAPIUsage(ViewMessage.SHORT_EXISTS)
+                raise InvalidShort(ViewMessage.SHORT_EXISTS)
         else:
             short = URLMap.get_unique_short()
+        if api and len(original) > Original.LENGTH:
+            raise InvalidURL(ViewMessage.URL_INVALID)
         url_map = URLMap(
             original=original,
             short=short

@@ -1,5 +1,4 @@
-from flask import render_template, redirect
-from wtforms.validators import ValidationError
+from flask import render_template, redirect, flash
 
 from . import app
 from .forms import URLForm
@@ -22,8 +21,8 @@ def index_view():
                 ).short
             ),
         )
-    except ValidationError as e:
-        form.custom_id.errors = [str(e)]
+    except Exception as e:
+        flash(str(e))
         return render_template('index.html', form=form)
 
 

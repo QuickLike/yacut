@@ -28,6 +28,7 @@ class Original(object):
 class ViewMessage(object):
     EMPTY_BODY = 'Отсутствует тело запроса'
     URL_REQUIRED = '"url" является обязательным полем!'
+    URL_INVALID = 'Указано недопустимый формат ссылки'
     SHORT_NOT_FOUND = 'Указанный id не найден'
     SHORT_EXISTS = 'Предложенный вариант короткой ссылки уже существует.'
     SHORT_INVALID = 'Указано недопустимое имя для короткой ссылки'

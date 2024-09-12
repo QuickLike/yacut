@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
 from flask import jsonify, request
-from wtforms.validators import ValidationError
 
 from settings import ViewMessage
 from . import app
@@ -34,5 +33,5 @@ def create_url():
                 data.get('custom_id')
             ).to_dict()
         ), HTTPStatus.CREATED
-    except ValidationError as e:
+    except Exception as e:
         raise InvalidAPIUsage(str(e))
