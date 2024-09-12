@@ -6,12 +6,18 @@ from flask import url_for
 
 from settings import Short, Original, CUT_FUNCTION, ViewMessage
 from . import db
-from .error_handlers import (
-    LimitReached,
-    InvalidAPIUsage,
-    InvalidShort,
-    InvalidURL
-)
+
+
+class LimitReached(Exception):
+    pass
+
+
+class InvalidShort(Exception):
+    pass
+
+
+class InvalidURL(Exception):
+    pass
 
 
 class URLMap(db.Model):
@@ -54,19 +60,17 @@ class URLMap(db.Model):
         return url_maps.first()
 
     @staticmethod
-    def create(original: str, short: str, api=False):
+    def create(original: str, short: str, from_form=False):
         if short:
-            if len(short) > Short.LENGTH or not re.match(Short.REGEX, short):
-                if api:
-                    raise InvalidAPIUsage(ViewMessage.SHORT_INVALID)
-                raise InvalidShort(ViewMessage.SHORT_INVALID)
-            if URLMap.get(short):
-                if api:
-                    raise InvalidAPIUsage(ViewMessage.SHORT_EXISTS)
-                raise InvalidShort(ViewMessage.SHORT_EXISTS)
+            if not from_form:
+                if (len(short) > Short.LENGTH or
+                        not re.match(Short.REGEX, short)):
+                    raise InvalidShort(ViewMessage.SHORT_INVALID)
+                if URLMap.get(short):
+                    raise InvalidShort(ViewMessage.SHORT_EXISTS)
         else:
             short = URLMap.get_unique_short()
-        if api and len(original) > Original.LENGTH:
+        if not from_form and len(original) > Original.LENGTH:
             raise InvalidURL(ViewMessage.URL_INVALID)
         url_map = URLMap(
             original=original,

@@ -2,7 +2,7 @@ from flask import render_template, redirect, flash
 
 from . import app
 from .forms import URLForm
-from .models import URLMap
+from .models import URLMap, InvalidShort, InvalidURL, LimitReached
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -21,7 +21,7 @@ def index_view():
                 ).short
             ),
         )
-    except Exception as e:
+    except (InvalidShort, InvalidURL, LimitReached) as e:
         flash(str(e))
         return render_template('index.html', form=form)
 

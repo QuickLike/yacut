@@ -5,18 +5,6 @@ from flask import jsonify, render_template
 from . import app, db
 
 
-class LimitReached(Exception):
-    pass
-
-
-class InvalidShort(Exception):
-    pass
-
-
-class InvalidURL(Exception):
-    pass
-
-
 class InvalidAPIUsage(Exception):
     status_code = HTTPStatus.BAD_REQUEST
 
