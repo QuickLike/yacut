@@ -1,12 +1,11 @@
 import re
 from datetime import datetime
-from random import shuffle
+from random import choices
 
 from flask import url_for
 
 from settings import Short, Original, CUT_FUNCTION, ViewMessage
 from . import db
-from .error_handlers import InvalidUsage
 
 
 class URLMap(db.Model):
@@ -27,6 +26,8 @@ class URLMap(db.Model):
 
     @staticmethod
     def short_link(short):
+        if not short:
+            return None
         return url_for(
             CUT_FUNCTION,
             short=short,
@@ -35,44 +36,33 @@ class URLMap(db.Model):
 
     @staticmethod
     def get_unique_short() -> str:
-        chars = list(Short.CHARS)
-        shuffle(chars)
-        short = ''.join(chars)[:Short.LENGTH]
-        if URLMap.get(short):
-            short = URLMap.get_unique_short()
-        return str(short)
+        for _ in range(Short.MAX_ATTEMPTS):
+            short = ''.join(choices(Short.CHARS, k=Short.LENGTH))
+            if not URLMap.get(short):
+                return short
+        raise ValueError("Не удалось сгенерировать уникальный код.")
 
     @staticmethod
     def get(short: str, or_404=False):
+        url_map = URLMap.query.filter_by(short=short)
         if or_404:
-            return URLMap.query.filter_by(short=short).first_or_404()
-        return URLMap.query.filter_by(short=short).first()
+            return url_map.first_or_404()
+        return url_map.first()
 
     @staticmethod
-    def create(original: str, short: str = '', form=None):
-        error = False
+    def create(original: str, short: str):
+        errors = []
         url_map = None
-        if form is not None:
-            if not re.match(Short.REGEX, short):
-                form.custom_id.errors = [
-                    ViewMessage.SHORT_INVALID
-                ]
-                error = True
-            if URLMap.get(short):
-                form.custom_id.errors = [
-                    ViewMessage.SHORT_EXISTS
-                ]
-                error = True
-        else:
-            if not re.match(Short.REGEX, short):
-                raise InvalidUsage(ViewMessage.SHORT_INVALID)
-            if URLMap.get(short):
-                raise InvalidUsage(ViewMessage.SHORT_EXISTS)
-        if not error:
+        short = short or URLMap.get_unique_short()
+        if not re.match(Short.REGEX, short) or len(short) > Short.LENGTH:
+            errors.append(ViewMessage.SHORT_INVALID)
+        if URLMap.get(short):
+            errors.append(ViewMessage.SHORT_EXISTS)
+        if not errors:
             url_map = URLMap(
                 original=original,
                 short=short or URLMap.get_unique_short()
             )
             db.session.add(url_map)
             db.session.commit()
-        return url_map, form
+        return url_map, errors

@@ -10,20 +10,14 @@ def index_view():
     form = URLForm()
     if not form.validate_on_submit():
         return render_template('index.html', form=form)
-
-    short = form.custom_id.data
-
-    url_map, form = URLMap.create(form.original_link.data, short, form)
-
-    if form.errors:
-        short_url = None
-    else:
-        short_url = URLMap.short_link(url_map.short)
-
+    url_map, form.custom_id.errors = URLMap.create(
+        form.original_link.data,
+        form.custom_id.data
+    )
     return render_template(
         'index.html',
         form=form,
-        short_url=short_url,
+        short_url=URLMap.short_link(url_map.short if url_map else None),
     )
 
 

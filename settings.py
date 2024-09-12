@@ -10,12 +10,13 @@ SUBMIT_LABEL = 'Создать'
 class Short(object):
     LENGTH = 6
     CHARS = ascii_letters + digits
-    REGEX = r'^[' + CHARS + ']{,' + str(LENGTH) + '}$'
+    REGEX = f'^[{CHARS}]+$'
     LABEL = 'Ваш вариант короткой ссылки'
+    MAX_ATTEMPTS = 5
 
 
 class Original(object):
-    LENGTH = 1024
+    LENGTH = 2048
     LABEL = 'Длинная ссылка'
     REQUIRED_MESSAGE = 'Обязательное поле'
     INVALID_FORMAT = 'Некорректный формат ссылки'
