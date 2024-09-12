@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from flask import jsonify, request
+from wtforms.validators import ValidationError
 
 from settings import ViewMessage
 from . import app
@@ -12,7 +13,10 @@ from .models import URLMap
 def get_url(short):
     url_map = URLMap.get(short)
     if url_map is None:
-        raise InvalidAPIUsage(ViewMessage.ID_NOT_FOUND, HTTPStatus.NOT_FOUND)
+        raise InvalidAPIUsage(
+            ViewMessage.SHORT_NOT_FOUND,
+            HTTPStatus.NOT_FOUND
+        )
     return jsonify({'url': url_map.original}), HTTPStatus.OK
 
 
@@ -23,13 +27,12 @@ def create_url():
         raise InvalidAPIUsage(ViewMessage.EMPTY_BODY)
     if 'url' not in data:
         raise InvalidAPIUsage(ViewMessage.URL_REQUIRED)
-    url = data.get('url')
-    short = data.get('custom_id')
-
-    url_map, errors = URLMap.create(url, short)
-    for error in errors:
-        raise InvalidAPIUsage(error)
-
-    return jsonify(
-        url_map.to_dict()
-    ), HTTPStatus.CREATED
+    try:
+        return jsonify(
+            URLMap.create(
+                data.get('url'),
+                data.get('custom_id')
+            ).to_dict()
+        ), HTTPStatus.CREATED
+    except ValidationError as e:
+        raise InvalidAPIUsage(str(e))

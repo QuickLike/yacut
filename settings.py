@@ -9,10 +9,13 @@ SUBMIT_LABEL = 'Создать'
 
 class Short(object):
     LENGTH = 6
+    MAX_ATTEMPTS = 5
     CHARS = ascii_letters + digits
     REGEX = f'^[{CHARS}]+$'
     LABEL = 'Ваш вариант короткой ссылки'
-    MAX_ATTEMPTS = 5
+    GENERATE_ERROR = (
+        f'Не удалось сгенерировать уникальный код.\nПопыток: {MAX_ATTEMPTS}'
+    )
 
 
 class Original(object):
@@ -23,9 +26,9 @@ class Original(object):
 
 
 class ViewMessage(object):
-    ID_NOT_FOUND = 'Указанный id не найден'
     EMPTY_BODY = 'Отсутствует тело запроса'
     URL_REQUIRED = '"url" является обязательным полем!'
+    SHORT_NOT_FOUND = 'Указанный id не найден'
     SHORT_EXISTS = 'Предложенный вариант короткой ссылки уже существует.'
     SHORT_INVALID = 'Указано недопустимое имя для короткой ссылки'
 

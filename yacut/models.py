@@ -3,6 +3,7 @@ from datetime import datetime
 from random import choices
 
 from flask import url_for
+from wtforms.validators import ValidationError
 
 from settings import Short, Original, CUT_FUNCTION, ViewMessage
 from . import db
@@ -26,8 +27,6 @@ class URLMap(db.Model):
 
     @staticmethod
     def short_link(short):
-        if not short:
-            return None
         return url_for(
             CUT_FUNCTION,
             short=short,
@@ -40,29 +39,28 @@ class URLMap(db.Model):
             short = ''.join(choices(Short.CHARS, k=Short.LENGTH))
             if not URLMap.get(short):
                 return short
-        raise ValueError("Не удалось сгенерировать уникальный код.")
+        raise TimeoutError(Short.GENERATE_ERROR)
 
     @staticmethod
     def get(short: str, or_404=False):
-        url_map = URLMap.query.filter_by(short=short)
+        url_maps = URLMap.query.filter_by(short=short)
         if or_404:
-            return url_map.first_or_404()
-        return url_map.first()
+            return url_maps.first_or_404()
+        return url_maps.first()
 
     @staticmethod
     def create(original: str, short: str):
-        errors = []
-        url_map = None
-        short = short or URLMap.get_unique_short()
-        if not re.match(Short.REGEX, short) or len(short) > Short.LENGTH:
-            errors.append(ViewMessage.SHORT_INVALID)
-        if URLMap.get(short):
-            errors.append(ViewMessage.SHORT_EXISTS)
-        if not errors:
-            url_map = URLMap(
-                original=original,
-                short=short or URLMap.get_unique_short()
-            )
-            db.session.add(url_map)
-            db.session.commit()
-        return url_map, errors
+        if short:
+            if len(short) > Short.LENGTH or not re.match(Short.REGEX, short):
+                raise ValidationError(ViewMessage.SHORT_INVALID)
+            if URLMap.get(short):
+                raise ValidationError(ViewMessage.SHORT_EXISTS)
+        else:
+            short = URLMap.get_unique_short()
+        url_map = URLMap(
+            original=original,
+            short=short
+        )
+        db.session.add(url_map)
+        db.session.commit()
+        return url_map
