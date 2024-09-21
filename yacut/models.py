@@ -8,19 +8,16 @@ from settings import Short, Original, CUT_FUNCTION, ViewMessage
 from . import db
 
 
-class LimitReached(Exception):
-    pass
-
-
-class InvalidShort(Exception):
-    pass
-
-
-class InvalidURL(Exception):
-    pass
-
-
 class URLMap(db.Model):
+    class LimitReached(Exception):
+        pass
+
+    class InvalidShort(Exception):
+        pass
+
+    class InvalidURL(Exception):
+        pass
+
     id = db.Column(db.Integer, primary_key=True)
     original = db.Column(
         db.String(Original.LENGTH),
@@ -50,7 +47,7 @@ class URLMap(db.Model):
             short = ''.join(choices(Short.CHARS, k=Short.LENGTH))
             if not URLMap.get(short):
                 return short
-        raise LimitReached(Short.GENERATE_ERROR)
+        raise URLMap.LimitReached(Short.GENERATE_ERROR)
 
     @staticmethod
     def get(short: str, or_404=False):
@@ -60,18 +57,24 @@ class URLMap(db.Model):
         return url_maps.first()
 
     @staticmethod
-    def create(original: str, short: str, from_form=False):
+    def exists(short):
+        return not not URLMap.query.filter_by(short=short).first()
+
+    @staticmethod
+    def create(original: str, short: str, is_form=False):
         if short:
-            if not from_form:
-                if (len(short) > Short.LENGTH or
-                        not re.match(Short.REGEX, short)):
-                    raise InvalidShort(ViewMessage.SHORT_INVALID)
-                if URLMap.get(short):
-                    raise InvalidShort(ViewMessage.SHORT_EXISTS)
+            if URLMap.exists(short):
+                raise URLMap.InvalidShort(ViewMessage.SHORT_EXISTS)
+            if not is_form:
+                if (
+                    len(short) > Short.LENGTH or
+                    not re.match(Short.REGEX, short)
+                ):
+                    raise URLMap.InvalidShort(ViewMessage.SHORT_INVALID)
         else:
             short = URLMap.get_unique_short()
-        if not from_form and len(original) > Original.LENGTH:
-            raise InvalidURL(ViewMessage.URL_INVALID)
+        if not is_form and len(original) > Original.LENGTH:
+            raise URLMap.InvalidURL(ViewMessage.URL_INVALID)
         url_map = URLMap(
             original=original,
             short=short

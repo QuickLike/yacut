@@ -33,5 +33,5 @@ def create_url():
                 data.get('custom_id')
             ).to_dict()
         ), HTTPStatus.CREATED
-    except Exception as e:
+    except (URLMap.InvalidShort, URLMap.InvalidURL, URLMap.LimitReached) as e:
         raise InvalidAPIUsage(str(e))
