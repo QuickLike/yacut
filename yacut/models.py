@@ -57,24 +57,21 @@ class URLMap(db.Model):
         return url_maps.first()
 
     @staticmethod
-    def exists(short):
-        return not not URLMap.query.filter_by(short=short).first()
-
-    @staticmethod
-    def create(original: str, short: str, is_form=False):
+    def create(original: str, short: str, validate_short=False):
         if short:
-            if URLMap.exists(short):
-                raise URLMap.InvalidShort(ViewMessage.SHORT_EXISTS)
-            if not is_form:
+            if not validate_short and len(original) > Original.LENGTH:
+                raise URLMap.InvalidURL(ViewMessage.URL_INVALID)
+            if not validate_short:
                 if (
                     len(short) > Short.LENGTH or
                     not re.match(Short.REGEX, short)
                 ):
                     raise URLMap.InvalidShort(ViewMessage.SHORT_INVALID)
+            if URLMap.get(short):
+                raise URLMap.InvalidShort(ViewMessage.SHORT_EXISTS)
+
         else:
             short = URLMap.get_unique_short()
-        if not is_form and len(original) > Original.LENGTH:
-            raise URLMap.InvalidURL(ViewMessage.URL_INVALID)
         url_map = URLMap(
             original=original,
             short=short
