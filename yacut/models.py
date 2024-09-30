@@ -62,11 +62,8 @@ class URLMap(db.Model):
             raise URLMap.InvalidURL(ViewMessage.URL_INVALID)
         if not short:
             short = URLMap.get_unique_short()
-        else:
-            if (
-                len(short) > Short.LENGTH or
-                not re.match(Short.REGEX, short)
-            ):
+        elif not validate:
+            if len(short) > Short.LENGTH or not re.match(Short.REGEX, short):
                 raise URLMap.InvalidShort(ViewMessage.SHORT_INVALID)
             if URLMap.get(short):
                 raise URLMap.InvalidShort(ViewMessage.SHORT_EXISTS)
